@@ -1,0 +1,244 @@
+SINAMICS V20 — Operating Instructions
+=======================================
+Document Version: 3.2
+Product Family: SINAMICS V20 Basic Inverter
+Frame Sizes: FSA (0.12–0.37 kW), FSB (0.37–0.75 kW), FSC (0.75–3.0 kW), FSD (4.0–7.5 kW), FSE (11–15 kW)
+
+TABLE OF CONTENTS
+1. Product Description and Features
+2. Installation Requirements
+3. Electrical Connections
+4. Commissioning with BOP
+5. Application Macros
+6. Operating Modes and Speed Control
+7. Protective Functions and Safety
+8. Maintenance and Inspection
+
+------------------------------------------------------------------------
+
+SECTION 1: PRODUCT DESCRIPTION AND FEATURES
+
+The SINAMICS V20 is a basic, cost-effective inverter designed for:
+  - Pumps, fans, and compressors (variable torque)
+  - Conveyors and mixers (constant torque)
+  - Simple positioning applications
+
+Key Features:
+  - V/f control with adjustable boost for high starting torque
+  - Integrated DC braking for controlled deceleration
+  - Built-in EMC filter (Class A) on all models
+  - Multiple communication options: BOP, USS protocol (RS485), MODBUS RTU
+  - Energy-saving mode for fan/pump applications (automatic Vdc optimization)
+  - Compact design — 60% smaller than previous generation
+
+Operating Ranges:
+  - Input Voltage: 1AC 200–240V ±10% or 3AC 380–480V ±10%
+  - Output Frequency: 0–599 Hz
+  - Ambient Temperature: -10°C to +50°C (derate above 40°C by 2% per °C)
+  - Altitude: Up to 1000m without derating (derate 1% per 100m above)
+  - Humidity: 5–95% non-condensing
+  - Protection Class: IP20 (standard), IP21 available with kit
+
+------------------------------------------------------------------------
+
+SECTION 2: INSTALLATION REQUIREMENTS
+
+Mounting Position: Vertical only, with components oriented as shown in mounting diagram.
+
+Minimum Clearances:
+  - Top: 100 mm (ventilation inlet)
+  - Bottom: 100 mm (ventilation outlet)
+  - Left/Right: 0 mm (side-by-side mounting permitted)
+  - Front: Sufficient for cable bending radius
+
+Ambient Conditions:
+  - Avoid direct sunlight, corrosive gases, and excessive dust
+  - If ambient > 40°C, apply current derating curve from technical data sheet
+  - For cabinet installations, ensure adequate cabinet ventilation (CFM calc in appendix)
+
+Mounting Torque:
+  - FSA/FSB: 1.5 Nm
+  - FSC/FSD: 2.0 Nm
+  - FSE: 3.0 Nm
+
+------------------------------------------------------------------------
+
+SECTION 3: ELECTRICAL CONNECTIONS
+
+Input Power Connections (Terminals L1, L2, L3 / L, N):
+  - Wire Size: Per local electrical code, minimum as specified in technical data
+  - Protection: Upstream circuit breaker or fuses as per NEC/IEC requirements
+  - DO NOT connect power to output terminals (U, V, W) — this will destroy the drive
+
+Motor Connections (Terminals U, V, W):
+  - Connect motor phases in correct order for desired rotation direction
+  - Maximum motor cable length: 50m unshielded / 25m shielded (without output filter)
+  - For longer cables: Install an output reactor or sinusoidal filter
+  - Shield connection: Connect cable shield to PE bar at both drive and motor end
+
+Control Connections:
+  - Digital Inputs (DI1–DI4): 24VDC, programmable function
+    - DI1: ON/OFF1 (default)
+    - DI2: Reverse (default)
+    - DI3: External fault (default)
+    - DI4: Fault acknowledge (default)
+  - Analog Input (AI1): 0–10V or 0/4–20mA selectable (speed setpoint default)
+  - Relay Output (DO1): Programmable, SPDT, max 30VDC/5A or 250VAC/2A
+  - Analog Output (AO1): 0–20mA (output frequency default)
+
+GROUNDING: The drive MUST be connected to protective earth (PE). Use the dedicated
+PE terminal. Cable lug must ensure good metal-to-metal contact. Ground impedance < 10Ω.
+
+------------------------------------------------------------------------
+
+SECTION 4: COMMISSIONING WITH BOP
+
+Quick Commissioning Procedure:
+  1. Power up the drive — display shows "P0010" after initialization
+  2. Set p0010 = 1 (Quick commissioning mode)
+  3. Enter motor nameplate data:
+     - p0100: Motor region (0 = Europe/50Hz, 1 = North America/60Hz)
+     - p0304: Rated motor voltage (e.g., 400V)
+     - p0305: Rated motor current (e.g., 8.5A)
+     - p0307: Rated motor power (e.g., 4.0 kW)
+     - p0308: Rated motor power factor (cos φ, e.g., 0.82)
+     - p0310: Rated motor frequency (e.g., 50 Hz)
+     - p0311: Rated motor speed (e.g., 1450 rpm)
+  4. Select application macro:
+     - p0015 = 0: Factory default (DI + analog)
+     - p0015 = 1: USS on BOP link
+     - p0015 = 12: MODBUS RTU
+  5. Set motor identification: p1900 = 1 (standstill measurement, recommended)
+  6. Confirm with p3900 = 1 (End of quick commissioning)
+  7. Motor identification runs automatically — motor may briefly energize
+
+BOP Navigation:
+  - Arrow Up/Down: Navigate parameters or change values
+  - "P" button (short press): Enter/confirm parameter
+  - "P" button (long press): Toggle between parameter number and value
+  - "Fn" button: Access frequently-used parameter list
+
+------------------------------------------------------------------------
+
+SECTION 5: APPLICATION MACROS
+
+The V20 provides pre-configured I/O setups called Application Macros:
+
+Macro Cn000 (Factory Default):
+  - Command source: Digital inputs (DI1 = Start, DI2 = Reverse)
+  - Speed setpoint: Analog input AI1 (0–10V)
+  - Most common setup for basic applications
+
+Macro Cn001 (BOP Control):
+  - Command and setpoint from BOP panel
+  - Useful for commissioning and testing
+
+Macro Cn002 (Fixed Speeds):
+  - DI1 = ON/OFF, DI2 = Fixed speed 1, DI3 = Fixed speed 2, DI4 = Fixed speed 3
+  - Configure fixed frequencies: p1001 (speed 1), p1002 (speed 2), p1003 (speed 3)
+
+Macro Cn011 (USS Protocol):
+  - Command and setpoint via USS serial communication (RS485)
+  - Parameters: p2010 (USS baud rate), p2011 (USS address)
+
+Macro Cn012 (MODBUS RTU):
+  - Command and setpoint via MODBUS serial communication
+  - Parameters: p2010 (baud rate), p2021 (MODBUS address), p2022 (MODBUS protocol)
+
+------------------------------------------------------------------------
+
+SECTION 6: OPERATING MODES AND SPEED CONTROL
+
+V/f Control (Linear):
+  - Standard mode for most applications
+  - V/f characteristic defined by p0304, p0310, and p1310 (boost voltage)
+  - Suitable for: Conveyors, simple pumps, fans
+
+V/f Control (Quadratic):
+  - Set p1300 = 2
+  - Reduced voltage at low speeds — saves energy on fan/pump loads
+  - Suitable for: Centrifugal pumps, fans, blowers
+
+V/f Control (FCC — Flux Current Control):
+  - Set p1300 = 6
+  - Improved dynamic response without encoder
+  - Higher efficiency than standard V/f at partial loads
+  - Suitable for: Applications requiring better speed stability
+
+Energy Saving Mode:
+  - Activated via p1312 = 1
+  - Automatically reduces motor voltage at partial load
+  - Typical savings: 10–30% on pump/fan applications operating below 75% load
+  - Not recommended for constant torque applications
+
+Speed Limits:
+  - Minimum speed: p1080 (default 0 Hz, set to avoid motor resonance if needed)
+  - Maximum speed: p1082 (default 50/60 Hz, can be increased for high-speed applications)
+  - Skip frequencies: p1091/p1092 (define frequency bands to avoid mechanical resonance)
+
+------------------------------------------------------------------------
+
+SECTION 7: PROTECTIVE FUNCTIONS AND SAFETY
+
+Built-in Protections:
+  - Overcurrent (F30001): Instantaneous trip if output > 200% rated
+  - DC link overvoltage (F30002): Trip on regeneration or mains overvoltage
+  - DC link undervoltage (F30003): Trip on mains loss or brownout
+  - Overtemperature (F30004): Heat sink temperature protection
+  - Motor overload (I²t): Software thermal model protects motor
+  - Ground fault detection: Monitors for earth faults on output
+  - Phase loss: Input and output phase monitoring
+
+Safe Torque Off (STO):
+  - Integrated STO function conforming to SIL 2 (IEC 62061) / PL d (ISO 13849)
+  - Terminals: STO1+/STO1-, STO2+/STO2-
+  - Removes drive pulses — motor coasts to stop
+  - Does NOT provide electrical isolation — do not use for maintenance lockout
+  - Must be tested at regular intervals per machine safety assessment
+
+IMPORTANT: STO prevents motor torque generation but does not disconnect mains power.
+For energy isolation during maintenance, use an upstream disconnector with lockout/tagout.
+
+------------------------------------------------------------------------
+
+SECTION 8: MAINTENANCE AND INSPECTION
+
+Routine Inspection Schedule:
+
+Weekly:
+  - Check for unusual noise or vibration from the drive
+  - Verify BOP display shows no active alarms
+  - Check ambient temperature around the drive
+
+Monthly:
+  - Clean air intake and exhaust areas
+  - Check for dust accumulation on heat sink fins
+  - Verify cooling fan operation (should spin freely, no grinding noise)
+
+Quarterly:
+  - Inspect all power and control cable connections — retorque if necessary
+  - Check for condensation or moisture inside the cabinet
+  - Review fault history buffer (r2110/r2111) for recurring issues
+
+Annually:
+  - Perform motor insulation resistance test (megger test)
+  - Thermal imaging of all power connections under load
+  - Check DC link capacitor health via voltage ripple measurement
+  - Verify protective functions (STO test, overcurrent test)
+
+Fan Replacement:
+  - Expected fan life: 3–5 years (depending on ambient conditions)
+  - Symptoms of failing fan: increased heat sink temperature, grinding noise
+  - FSA/FSB: Fan not field-replaceable (replace entire drive)
+  - FSC/FSD/FSE: Fan is field-replaceable. Order part number from Siemens catalog.
+
+DC Link Capacitor Aging:
+  - Capacitors degrade over time, especially at high temperatures
+  - Expected life: 5–10 years at rated conditions
+  - Symptoms: Increased DC link voltage ripple, frequent F30002/F30003 faults
+  - Measurement: Compare Vdc ripple at no-load against commissioning baseline
+  - If ripple increased > 50%, replace the power module
+
+NOTICE: Always refer to the latest version of the operating instructions on the
+Siemens Industry Support Portal (support.industry.siemens.com) for the most
+current safety information and technical specifications.

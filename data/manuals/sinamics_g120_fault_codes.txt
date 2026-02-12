@@ -1,0 +1,219 @@
+SINAMICS G120 — Fault Codes and Diagnostics Reference
+======================================================
+Document Version: 4.7 SP11
+Product Family: SINAMICS G120 Variable Frequency Drives
+Applicable Models: G120, G120C, G120D, G120P
+
+TABLE OF CONTENTS
+1. Overview of Fault and Alarm System
+2. Power Unit Faults (F300xx)
+3. Motor and Drive Faults (F070xx)
+4. Communication Faults (F018xx)
+5. General Troubleshooting Procedures
+
+------------------------------------------------------------------------
+
+SECTION 1: OVERVIEW OF FAULT AND ALARM SYSTEM
+
+The SINAMICS G120 uses a structured diagnostic system:
+- Faults (Fxxxxx): Drive trips and motor stops. Must be acknowledged after root cause is resolved.
+- Alarms (Axxxxx): Warning conditions. Drive continues to operate but condition should be investigated.
+
+Fault acknowledgment methods:
+1. Toggle Digital Input (DI) configured for fault acknowledge
+2. Via BOP (Basic Operator Panel): press the "Reset" button
+3. Via fieldbus (e.g., PROFINET command word bit 7)
+4. Power cycle (OFF1/OFF2) for latched faults
+
+------------------------------------------------------------------------
+
+SECTION 2: POWER UNIT FAULTS (F300xx)
+
+F30001 — Power Unit: Overcurrent
+  Description: The output current has exceeded the maximum permissible value.
+  Probable Causes:
+    - Short circuit in motor cable or motor windings
+    - Earth/ground fault on output
+    - Motor parameters (p0304, p0305, p0307) incorrectly set
+    - Sudden load impact exceeding drive capacity
+  Remedies:
+    1. Check motor cable for damage and correct connection
+    2. Perform insulation test on motor (disconnect from drive first)
+    3. Verify motor nameplate data matches parameter settings
+    4. Run motor identification (p1900 = 1 or 2)
+    5. If load impact is cause, consider increasing drive rating
+  Related Parameters: p0304 (Rated Voltage), p0305 (Rated Current), p0307 (Rated Power)
+
+F30002 — Power Unit: DC Link Overvoltage
+  Description: The DC link voltage (r0026) has exceeded the maximum permissible threshold.
+    - 400V units: Trip at approx. 810 VDC (normal operating ~565 VDC)
+    - 200V units: Trip at approx. 405 VDC (normal operating ~283 VDC)
+  Probable Causes:
+    - Motor regenerating energy during deceleration (most common)
+    - Line supply voltage too high
+    - Deceleration ramp time (p1121) too short for load inertia
+    - Braking resistor not connected or faulty
+    - DC link voltage controller (Vdc) deactivated
+    - Interrupted line phase
+  Remedies:
+    1. Increase ramp-down time p1121 (try doubling the current value)
+    2. Set ramp smoothing times p1130/p1136 to relieve Vdc controller
+    3. Activate DC link voltage controller: set p1240 = 1
+    4. Check mains voltage against p0210 setting
+    5. If load has high inertia, install a braking resistor (p1237, p1238)
+    6. Verify braking resistor connection and resistance value
+    7. Check for interrupted supply phase — all 3 phases must be present
+  Related Parameters: r0026 (DC link voltage), p1121 (Ramp-down time), p1240 (Vdc controller)
+  SAFETY WARNING: DC link capacitors retain dangerous voltage after power-off.
+    Wait at least 5 minutes before opening the unit.
+
+F30003 — Power Unit: DC Link Undervoltage
+  Description: The DC link voltage has dropped below the minimum permissible threshold.
+  Probable Causes:
+    - Mains supply voltage too low or brownout condition
+    - Supply contactor opened during operation
+    - Power supply cable too long or undersized
+    - Pre-charging circuit fault
+  Remedies:
+    1. Check mains supply voltage stability
+    2. Verify power cable sizing per installation manual
+    3. Check supply contactor and control wiring
+    4. If supply dips are expected, increase kinetic buffering (p1240 = 2)
+  Related Parameters: r0026, p0210 (Supply voltage)
+
+F30004 — Power Unit: Overtemperature, Heat Sink
+  Description: The power module heat sink temperature has exceeded the safe operating limit.
+  Probable Causes:
+    - Ambient temperature above 40°C (or derated value)
+    - Cooling fan blocked or failed
+    - Air filter clogged with dust/debris
+    - Inadequate clearance around the drive (min 100mm top/bottom)
+    - Sustained operation above rated current
+  Remedies:
+    1. Check and clean cooling fan — replace if not spinning freely
+    2. Clean or replace air filter
+    3. Verify installation clearances per mounting instructions
+    4. Reduce ambient temperature or provide cabinet cooling
+    5. Reduce load or upsize the drive if thermally limited
+  Related Parameters: r0037 (Heat sink temperature), p0625 (Overtemp threshold)
+
+F30005 — Power Unit: I2t Overload
+  Description: The drive has been operating above rated current for too long.
+    The I²t calculation has reached 100%.
+  Probable Causes:
+    - Continuous operation above rated current (p0305)
+    - Frequent acceleration/deceleration cycles
+    - Motor stalling or high-friction load
+    - Drive undersized for application
+  Remedies:
+    1. Reduce load to within drive rating
+    2. Increase acceleration/deceleration ramp times
+    3. Check for mechanical issues causing excessive load
+    4. Upsize drive if application requires higher continuous current
+
+F30017 — Power Unit: EEPROM Data Error
+  Description: Internal data storage error detected during power-up.
+  Probable Causes:
+    - Electrical noise during parameter save
+    - Hardware defect in control unit
+    - Power loss during firmware update
+  Remedies:
+    1. Perform factory reset (p0970 = 1)
+    2. Re-commission the drive with correct parameters
+    3. If fault recurs, replace the Control Unit (CU)
+
+F30021 — Power Unit: Ground Fault
+  Description: An earth/ground fault has been detected on the motor output.
+  Probable Causes:
+    - Damaged motor cable insulation
+    - Motor winding insulation failure (moisture, age, overheating)
+    - Cable glands not properly sealed (moisture ingress)
+    - Long motor cable without output filter
+  Remedies:
+    1. Disconnect motor cable from drive, measure insulation resistance
+    2. Inspect cable routing — avoid running next to high-voltage lines
+    3. Check motor for moisture damage, dry out if necessary
+    4. For cables > 50m, install an output reactor or dU/dt filter
+
+------------------------------------------------------------------------
+
+SECTION 3: MOTOR AND DRIVE FAULTS (F070xx)
+
+F07011 — Motor: Overtemperature (sensor)
+  Description: The motor temperature sensor (PTC/KTY/PT1000) has reported overtemperature.
+  Probable Causes:
+    - Motor operating above rated load
+    - Insufficient cooling (blocked fan, no forced ventilation at low speed)
+    - Motor in stall condition
+    - Incorrect temperature sensor type selected (p0601)
+  Remedies:
+    1. Reduce motor load or duty cycle
+    2. Check external motor fan operation (mandatory for continuous low-speed operation)
+    3. Verify temperature sensor wiring and type selection (p0601)
+    4. Allow motor to cool before restarting
+
+F07900 — Motor: Speed/Position Error (Encoder)
+  Description: Mismatch between expected and actual motor position/speed.
+  Probable Causes:
+    - Encoder cable fault or disconnection
+    - Encoder supply voltage incorrect
+    - Encoder mounting loose — mechanical slip
+    - EMC interference on encoder cable (not shielded)
+  Remedies:
+    1. Check encoder cable continuity and shielding (shield grounded at drive end)
+    2. Verify encoder supply voltage (typically 5V or 24V per encoder spec)
+    3. Tighten encoder mechanical mounting
+    4. Route encoder cable away from power cables
+
+A07910 — Motor: Speed/Position Warning (Encoder)
+  Description: Warning level of speed/position deviation reached.
+  Note: Drive continues to operate. If deviation increases, fault F07900 will trip.
+  Remedies: Same as F07900, but less urgent. Schedule maintenance.
+
+------------------------------------------------------------------------
+
+SECTION 4: COMMUNICATION FAULTS (F018xx)
+
+F01800 — PROFINET: Communication Error
+  Description: Communication with the PROFINET controller has been lost.
+  Probable Causes:
+    - Network cable disconnected or damaged
+    - PLC/controller failure
+    - IP address conflict or incorrect network settings
+    - Switch or network infrastructure failure
+  Remedies:
+    1. Check Ethernet cable connection (LED status on port)
+    2. Verify IP address (p8921), subnet mask (p8922), gateway (p8924)
+    3. Ping the drive from a PC to verify network connectivity
+    4. Check PLC program and communication watchdog settings
+
+------------------------------------------------------------------------
+
+SECTION 5: GENERAL TROUBLESHOOTING PROCEDURES
+
+Step-by-Step Diagnostic Procedure:
+  1. Read the fault code from the BOP display or via diagnostic buffer (r0945)
+  2. Note the fault value (r0949) — this provides additional context
+  3. Check the operating conditions at time of fault:
+     - DC link voltage (r0026)
+     - Output current (r0027)
+     - Motor speed (r0021)
+     - Heat sink temperature (r0037)
+  4. Cross-reference with the fault description in this document
+  5. Check for environmental factors:
+     - Ambient temperature (should be < 40°C without derating)
+     - Humidity (non-condensing)
+     - Altitude (derate above 1000m)
+     - Vibration level (max 0.5g per IEC 60721)
+  6. Implement the remedy and clear the fault
+  7. Monitor for recurrence — if fault returns, escalate to next remedy level
+
+Preventive Maintenance Schedule:
+  - Monthly: Clean air filters, check fan operation
+  - Quarterly: Inspect cable connections, check for unusual vibration or noise
+  - Annually: Insulation test on motor, thermal scan of connections
+  - Every 5 years: Replace cooling fan, inspect DC link capacitors (ESR measurement)
+
+SAFETY NOTICE: All work on the drive must be performed by qualified personnel.
+Disconnect power and wait 5 minutes before accessing internal components.
+Follow local electrical codes and Siemens safety instructions at all times.
