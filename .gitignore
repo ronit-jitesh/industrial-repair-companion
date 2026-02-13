@@ -8,13 +8,6 @@ build/
 venv/
 .venv/
 
-# FAISS indices (can be rebuilt)
-indices/
-
-# Data files (large/generated)
-data/repair_logs.csv
-data/repair_logs_cleaned.csv
-
 # IDE
 .vscode/
 .idea/
@@ -22,3 +15,6 @@ data/repair_logs_cleaned.csv
 # OS
 .DS_Store
 Thumbs.db
+
+# Screenshots (portfolio assets)
+screenshots/
